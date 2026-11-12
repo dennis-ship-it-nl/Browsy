@@ -1,0 +1,25 @@
+name: Bouw Mac-app en DMG
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  build:
+    runs-on: macos-14
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm run pack
+      - run: npm run dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Browsy-dmg
+          path: dist/*.dmg
+      - name: Release bij tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with: { files: dist/*.dmg }
