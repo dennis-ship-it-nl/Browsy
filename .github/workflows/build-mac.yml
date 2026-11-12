@@ -5,7 +5,7 @@ on:
     tags: ['v*']
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15-intel
     permissions:
       contents: write
     steps:
