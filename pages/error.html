@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Pagina niet bereikbaar</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrap" style="padding-top:12vh">
+  <div class="eyebrow">Foutmelding</div>
+  <h1>Deze pagina is <em>niet bereikbaar</em></h1>
+  <p id="host" style="font-size:16px"></p>
+  <p class="muted" id="desc" style="margin:10px 0 24px"></p>
+  <button class="btn" id="retry">Probeer opnieuw</button>
+</div>
+<script>
+const p = new URLSearchParams(location.search), target = p.get('url') || '';
+let host = target; try { host = new URL(target).host; } catch (_) {}
+document.getElementById('host').textContent = host ? host + ' reageert niet of kon niet worden gevonden.' : '';
+const nice = { ERR_NAME_NOT_RESOLVED: 'Het adres bestaat niet of je hebt geen internetverbinding.', ERR_INTERNET_DISCONNECTED: 'Je bent niet verbonden met internet.', ERR_CONNECTION_REFUSED: 'De server weigert de verbinding.', ERR_CONNECTION_TIMED_OUT: 'De server deed er te lang over om te antwoorden.', ERR_CERT_AUTHORITY_INVALID: 'Het beveiligingscertificaat van deze site is niet te vertrouwen.', ERR_CERT_DATE_INVALID: 'Het beveiligingscertificaat van deze site is verlopen.' };
+const d = (p.get('desc') || '').replace(/^net::/, '');
+document.getElementById('desc').textContent = (nice[d] || 'Er ging iets mis bij het laden.') + ' (' + d + ')';
+document.getElementById('retry').onclick = () => { if (target) daarom.invoke('navigate', target); };
+</script>
+</body>
+</html>

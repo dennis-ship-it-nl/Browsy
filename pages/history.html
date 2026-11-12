@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data:; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Geschiedenis</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Browsy</div>
+  <h1>Je <em>geschiedenis</em></h1>
+  <input class="search" type="text" id="q" placeholder="Zoek in je geschiedenis" autocomplete="off" autofocus>
+  <div id="list"></div>
+  <p style="margin-top:28px"><button class="btn" id="clear">Wis alle geschiedenis</button></p>
+</div>
+<script>
+const list = document.getElementById('list');
+const dayName = t => {
+  const d = new Date(t), n = new Date(), y = new Date(Date.now() - 864e5);
+  if (d.toDateString() === n.toDateString()) return 'Vandaag';
+  if (d.toDateString() === y.toDateString()) return 'Gisteren';
+  return d.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+};
+async function load() {
+  const items = await daarom.invoke('history:list', document.getElementById('q').value.trim());
+  list.textContent = '';
+  if (!items.length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Niets gevonden.'; list.appendChild(p); return; }
+  let last = '';
+  items.forEach(it => {
+    const dn = dayName(it.last);
+    if (dn !== last) { const h = document.createElement('div'); h.className = 'day'; h.textContent = dn; list.appendChild(h); last = dn; }
+    const row = document.createElement('div'); row.className = 'row';
+    const tm = document.createElement('div'); tm.className = 'muted'; tm.style.width = '44px';
+    tm.textContent = new Date(it.last).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+    const a = document.createElement('a'); a.className = 'main'; a.href = it.url;
+    const t = document.createElement('div'); t.className = 't'; t.textContent = it.title || it.url;
+    const u = document.createElement('div'); u.className = 'u'; u.textContent = it.url;
+    a.append(t, u);
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Verwijder';
+    x.onclick = async () => { await daarom.invoke('history:remove', it.url); load(); };
+    row.append(tm, a, x); list.appendChild(row);
+  });
+}
+document.getElementById('q').addEventListener('input', load);
+document.getElementById('clear').onclick = async () => { if (confirm('Alle geschiedenis wissen?')) { await daarom.invoke('data:clear', { history: true }); load(); } };
+load();
+</script>
+</body>
+</html>

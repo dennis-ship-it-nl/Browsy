@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Instellingen</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Browsy</div>
+  <h1><em>Instellingen</em></h1>
+
+  <h2>Zoeken en opstarten</h2>
+  <div class="setting"><div>Zoekmachine<div class="d">Gebruikt in de adresbalk en op het nieuwe tabblad</div></div><select id="searchEngine"></select></div>
+  <div class="setting"><div>Bij het opstarten<div class="d">Wat zie je als je de browser opent</div></div>
+    <select id="startup"><option value="restore">Open mijn vorige tabbladen</option><option value="newtab">Open een nieuw tabblad</option><option value="home">Open mijn startpagina</option></select></div>
+  <div class="setting"><div>Startpagina</div><input type="text" id="homepage" placeholder="https://daar-om.nl" style="width:280px"></div>
+
+  <h2>Uiterlijk</h2>
+  <div class="setting"><div>Thema</div><select id="theme"><option value="system">Volg mijn Mac</option><option value="light">Licht</option><option value="dark">Donker</option></select></div>
+  <div class="setting"><div>Bladwijzerbalk tonen<div class="d">Cmd+Shift+B</div></div><input type="checkbox" id="bookmarksBar"></div>
+
+  <h2>Snelkoppelingen op het nieuwe tabblad</h2>
+  <p class="note" style="margin:0 0 10px">Eén per regel: Naam | Omschrijving | Adres</p>
+  <textarea id="links" spellcheck="false"></textarea>
+  <p style="margin-top:10px"><button class="btn" id="saveLinks">Bewaar snelkoppelingen</button> <span class="muted" id="linksMsg"></span></p>
+
+  <h2>Bladwijzers en standaardbrowser</h2>
+  <p><button class="btn" id="imp">Importeer bladwijzers uit Chrome</button> <span class="muted" id="impMsg"></span></p>
+  <p style="margin-top:10px"><button class="btn" id="def">Maak Browsy mijn standaardbrowser</button></p>
+
+  <h2>Extensies</h2>
+  <div id="ext"></div>
+  <p style="margin-top:10px"><button class="btn" id="store">Open de Chrome Web Store</button> <button class="btn" id="addExt">Voeg uitgepakte extensie toe</button> <span class="muted" id="extMsg"></span></p>
+  <p class="note">Ga naar de Chrome Web Store en klik op "Toevoegen aan Chrome". Extensies verschijnen rechts in de werkbalk en werken niet in privévensters. Extensies die een apart programma op je Mac nodig hebben, zoals iCloud Wachtwoorden, werken niet.</p>
+
+  <h2>Browsegegevens wissen</h2>
+  <label class="chk"><input type="checkbox" id="cHistory" checked> Geschiedenis</label>
+  <label class="chk"><input type="checkbox" id="cCookies"> Cookies en websitegegevens (je wordt overal uitgelogd)</label>
+  <label class="chk"><input type="checkbox" id="cCache" checked> Gecachte bestanden</label>
+  <p style="margin-top:10px"><button class="btn" id="clear">Wis geselecteerde gegevens</button> <span class="muted" id="clearMsg"></span></p>
+
+  <h2>Over</h2>
+  <p class="muted" id="ver"></p>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+let S = null;
+const save = patch => daarom.invoke('setSettings', patch);
+async function loadExt() {
+  const list = await daarom.invoke('ext:list'); const box = $('ext'); box.textContent = '';
+  if (!list.length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Geen extensies geladen.'; box.appendChild(p); }
+  list.forEach(x => {
+    const r = document.createElement('div'); r.className = 'row';
+    const m = document.createElement('div'); m.className = 'main'; m.textContent = x.name + ' ' + x.version;
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Verwijder';
+    b.onclick = async () => { await daarom.invoke('ext:remove', x.id); loadExt(); };
+    r.append(m, b); box.appendChild(r);
+  });
+}
+daarom.invoke('getSettings').then(s => {
+  S = s;
+  Object.entries(s.engines).forEach(([k, n]) => { const o = document.createElement('option'); o.value = k; o.textContent = n; $('searchEngine').appendChild(o); });
+  $('searchEngine').value = s.searchEngine; $('startup').value = s.startup; $('homepage').value = s.homepage || '';
+  $('theme').value = s.theme; $('bookmarksBar').checked = !!s.bookmarksBar;
+  $('links').value = (s.newtabLinks || []).map(l => l.join(' | ')).join('\n');
+  $('ver').textContent = 'Browsy ' + s.version + ', gebouwd op de Chromium-engine.';
+});
+['searchEngine', 'startup', 'theme'].forEach(k => $(k).onchange = () => save({ [k]: $(k).value }));
+$('homepage').onchange = () => save({ homepage: $('homepage').value.trim() });
+$('bookmarksBar').onchange = () => save({ bookmarksBar: $('bookmarksBar').checked });
+$('saveLinks').onclick = async () => {
+  const links = $('links').value.split('\n').map(l => l.split('|').map(x => x.trim())).filter(p => p.length >= 3 && p[0] && /^https?:\/\//i.test(p[2]));
+  await save({ newtabLinks: links }); $('linksMsg').textContent = links.length + ' snelkoppelingen bewaard.';
+};
+$('imp').onclick = async () => { const r = await daarom.invoke('import:chrome'); $('impMsg').textContent = r && r.found ? r.added + ' toegevoegd, ' + (r.found - r.added) + ' bestonden al.' : 'Geen Chrome-bladwijzers gevonden.'; };
+$('store').onclick = () => daarom.invoke('openUrl', 'https://chromewebstore.google.com/');
+$('def').onclick = () => daarom.invoke('defaultBrowser');
+$('addExt').onclick = async () => { const r = await daarom.invoke('ext:add'); $('extMsg').textContent = r.ok ? r.name + ' geladen.' : (r.error || ''); loadExt(); };
+$('clear').onclick = async () => {
+  await daarom.invoke('data:clear', { history: $('cHistory').checked, cookies: $('cCookies').checked, cache: $('cCache').checked });
+  $('clearMsg').textContent = 'Gewist.';
+};
+loadExt();
+</script>
+</body>
+</html>

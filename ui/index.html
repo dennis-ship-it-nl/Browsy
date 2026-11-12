@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: http: data: crx:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Browsy</title>
+<style>
+:root{--chrome:#E8EBDF;--page:#F4F3ED;--ink:#243328;--sage:#516D4F;--muted:#606B5E;--line:rgba(36,51,40,.17);--idle:rgba(244,243,237,.45)}
+@media (prefers-color-scheme:dark){:root{--chrome:#141915;--page:#202722;--ink:#EFF7E1;--sage:#8CAF87;--muted:#96A294;--line:rgba(239,247,225,.16);--idle:rgba(32,39,34,.5)}}
+body.priv{--chrome:#1B1F26;--page:#252A33;--ink:#E8ECF3;--sage:#A7B8D9;--muted:#98A1B3;--line:rgba(232,236,243,.15);--idle:rgba(37,42,51,.5)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:var(--chrome);font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+.tabrow{height:46px;display:flex;align-items:flex-end;gap:6px;padding:10px 12px 0 14px;-webkit-app-region:drag}
+.mac .tabrow{padding-left:84px}
+.tabs{display:flex;gap:4px;flex:1;min-width:0;-webkit-app-region:no-drag}
+.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:36px;padding:0 6px 0 12px;border-radius:12px 12px 0 0;font-size:13px;color:var(--muted);background:var(--idle);cursor:default;border:1px solid transparent;border-bottom:none;overflow:hidden}
+.tab.pinned{flex:none;width:42px;max-width:42px;padding:0;justify-content:center}
+.tab.pinned span,.tab.pinned button.x{display:none}
+.tab:hover{color:var(--ink)}
+.tab.active{background:var(--page);color:var(--ink);border-color:var(--line)}
+.tab.over{box-shadow:inset 2px 0 0 var(--sage)}
+.fav{width:16px;height:16px;border-radius:5px;flex:none;display:grid;place-items:center;font-size:10px;font-weight:600;background:var(--line);color:var(--muted);overflow:hidden}
+.fav img{width:16px;height:16px;display:block}
+.tab span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spk{width:13px;height:13px;stroke:var(--sage);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tab button.x{all:unset;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:14px;line-height:1;color:var(--muted);flex:none}
+.tab button.x:hover{background:var(--line);color:var(--ink)}
+.plus{all:unset;width:30px;height:30px;margin-bottom:3px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:18px;-webkit-app-region:no-drag;flex:none}
+.plus:hover{background:var(--line);color:var(--ink)}
+.tool{height:53px;display:flex;align-items:center;gap:6px;padding:0 14px;background:var(--page);border-bottom:1px solid var(--line)}
+.ib{all:unset;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.ib:hover{background:var(--chrome);color:var(--ink)}
+.ib.on{background:var(--chrome);color:var(--sage)}
+.ib[disabled]{opacity:.35;pointer-events:none}
+.ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.addr{flex:1;max-width:680px;margin:0 auto;height:34px;border-radius:14px;background:var(--chrome);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;font-size:13.5px;border:1px solid transparent}
+.addr:focus-within{border-color:var(--sage);background:var(--page)}
+.addr input{all:unset;flex:1;min-width:0;color:var(--ink);-webkit-user-select:text;user-select:text}
+.addr input::placeholder{color:var(--muted)}
+.addr>svg{width:14px;height:14px;stroke:var(--sage);fill:none;stroke-width:1.8;flex:none}
+.star{all:unset;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.star:hover{background:var(--line);color:var(--ink)}
+.star svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linejoin:round}
+.star.on{color:var(--sage)}
+.star.on svg{fill:currentColor}
+.privtag{font-size:12px;color:var(--sage);margin-right:6px;display:none}
+.priv .privtag{display:block}
+.priv browser-action-list{display:none}
+browser-action-list{display:flex;align-items:center;gap:2px;flex:none}
+browser-action-list::part(action){width:30px;height:30px;border-radius:50%}
+browser-action-list::part(action):hover{background:var(--chrome)}
+.bm{display:none;height:34px;align-items:center;gap:2px;padding:0 10px;background:var(--page);border-bottom:1px solid var(--line);overflow:hidden}
+.showbar .bm{display:flex}
+.bm button{all:unset;flex:none;max-width:160px;height:24px;padding:0 10px;border-radius:8px;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:24px}
+.bm button:hover{background:var(--chrome)}
+.bm .empty{font-size:12px;color:var(--muted);padding-left:4px}
+</style>
+</head>
+<body>
+<div class="tabrow"><div class="tabs" id="tabs"></div><button class="plus" id="plus" title="Nieuw tabblad">+</button></div>
+<div class="tool">
+  <button class="ib" id="back" title="Terug"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button class="ib" id="fwd" title="Vooruit"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  <button class="ib" id="reload" title="Herladen"><svg id="rl" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/></svg></button>
+  <div class="addr" id="addr">
+    <svg id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V8a4 4 0 018 0v2"/></svg>
+    <span id="insecure" style="display:none;font-size:12px;color:var(--muted);white-space:nowrap">Niet beveiligd</span>
+    <input id="url" placeholder="Zoek of typ een adres" spellcheck="false" autocomplete="off">
+    <span class="privtag">Privé</span>
+    <button class="star" id="star" title="Bladwijzer (Cmd+D)"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8-4.3-4.1 5.9-.8z"/></svg></button>
+  </div>
+  <browser-action-list id="bal"></browser-action-list>
+  <button class="ib" id="claude" title="Claude (Cmd+E)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></button>
+  <button class="ib" id="menu" title="Menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+</div>
+<div class="bm" id="bm"></div>
+<script>
+const $ = id => document.getElementById(id);
+const url = $('url'), tabsEl = $('tabs'), bm = $('bm');
+let lastActive = null, dragId = null, st = null;
+const RELOAD = '<path d="M20 11a8 8 0 10-2.3 5.7M20 5v6h-6"/>';
+const STOP = '<path d="M6 6l12 12M18 6L6 18"/>';
+const SPK = '<svg class="spk" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7"/></svg>';
+const SPK_OFF = '<svg class="spk" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>';
+
+function fav(t) {
+  const d = document.createElement('div'); d.className = 'fav';
+  if (t.favicon) { const i = document.createElement('img'); i.src = t.favicon; i.onerror = () => { i.remove(); d.textContent = letter(t); }; d.appendChild(i); }
+  else d.textContent = letter(t);
+  return d;
+}
+const letter = t => ((t.title || '?').trim()[0] || '?').toUpperCase();
+
+function render(s) {
+  st = s;
+  document.body.classList.toggle('mac', s.platform === 'darwin');
+  document.body.classList.toggle('priv', !!s.priv);
+  document.body.classList.toggle('showbar', !!s.bookmarksBar);
+  tabsEl.textContent = '';
+  s.tabs.forEach((t, idx) => {
+    const d = document.createElement('div');
+    d.className = 'tab' + (t.id === s.activeId ? ' active' : '') + (t.pinned ? ' pinned' : '');
+    d.title = t.title;
+    d.draggable = true;
+    d.appendChild(fav(t));
+    const sp = document.createElement('span'); sp.textContent = t.title; d.appendChild(sp);
+    if (t.audible || t.muted) { const w = document.createElement('span'); w.style.flex = 'none'; w.style.display = 'flex'; w.innerHTML = t.muted ? SPK_OFF : SPK; d.insertBefore(w, sp.nextSibling); if (t.pinned) w.style.display = 'none'; }
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Sluiten';
+    x.onclick = e => { e.stopPropagation(); api.closeTab(t.id); };
+    d.appendChild(x);
+    d.onclick = () => api.switchTab(t.id);
+    d.onauxclick = e => { if (e.button === 1) api.closeTab(t.id); };
+    d.oncontextmenu = e => { e.preventDefault(); api.tabMenu(t.id); };
+    d.ondragstart = e => { dragId = t.id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(t.id)); };
+    d.ondragover = e => { if (dragId !== null) { e.preventDefault(); d.classList.add('over'); } };
+    d.ondragleave = () => d.classList.remove('over');
+    d.ondrop = e => { e.preventDefault(); d.classList.remove('over'); if (dragId !== null && dragId !== t.id) api.moveTab(dragId, idx); dragId = null; };
+    d.ondragend = () => { dragId = null; };
+    tabsEl.appendChild(d);
+  });
+  const act = s.tabs.find(t => t.id === s.activeId);
+  if (act && (s.activeId !== lastActive || document.activeElement !== url)) url.value = act.url.replace(/^https:\/\//, '');
+  lastActive = s.activeId;
+  const http = !!(act && /^http:\/\//.test(act.url));
+  $('lock').style.display = http ? 'none' : '';
+  $('insecure').style.display = http ? '' : 'none';
+  $('back').disabled = !s.canBack;
+  $('fwd').disabled = !s.canForward;
+  $('rl').innerHTML = s.loading ? STOP : RELOAD;
+  $('claude').classList.toggle('on', s.claudeOpen);
+  if (s.activeWc) { const b = $('bal'); if (b.getAttribute('tab') !== String(s.activeWc)) b.setAttribute('tab', String(s.activeWc)); }
+  $('star').classList.toggle('on', s.bookmarked);
+  $('star').style.display = act && act.url && !/^daarom:/.test(act.url) ? '' : 'none';
+  bm.textContent = '';
+  if (s.bookmarksBar) {
+    if (!s.bookmarks.length) { const e = document.createElement('span'); e.className = 'empty'; e.textContent = 'Nog geen bladwijzers. Druk op Cmd+D om er een toe te voegen.'; bm.appendChild(e); }
+    s.bookmarks.forEach(b => {
+      const el = document.createElement('button'); el.textContent = b.title; el.title = b.title;
+      el.onclick = () => api.openBookmark(b.id, false);
+      el.onauxclick = e => { if (e.button === 1) api.openBookmark(b.id, true); };
+      el.oncontextmenu = e => { e.preventDefault(); api.bookmarkMenu(b.id); };
+      bm.appendChild(el);
+    });
+  }
+}
+
+api.onState(render);
+api.onFocusAddress(() => { url.focus(); url.select(); });
+$('plus').onclick = () => api.newTab();
+$('back').onclick = () => api.back();
+$('fwd').onclick = () => api.forward();
+$('reload').onclick = () => api.reload();
+$('claude').onclick = () => api.toggleClaude();
+$('star').onclick = () => api.toggleBookmark();
+$('menu').onclick = () => api.mainMenu();
+
+let blurT = null;
+const rect = () => { const r = $('addr').getBoundingClientRect(); return { x: r.left, width: r.width }; };
+url.addEventListener('focus', () => { clearTimeout(blurT); url.select(); });
+url.addEventListener('blur', () => { blurT = setTimeout(() => api.suggestClose(), 180); });
+url.addEventListener('input', () => api.suggest(url.value, rect()));
+url.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    api.suggestMove(e.key === 'ArrowDown' ? 1 : -1).then(v => { if (typeof v === 'string') url.value = v.replace(/^https:\/\//, ''); });
+  }
+  if (e.key === 'Enter') { api.go(url.value); url.blur(); }
+  if (e.key === 'Escape') { api.suggestClose(); url.blur(); api.ready(); }
+});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+api.ready();
+</script>
+</body>
+</html>

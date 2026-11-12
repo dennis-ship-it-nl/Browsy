@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Nieuw tabblad</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+.ntp{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 80px;background:radial-gradient(ellipse 60% 50% at 75% 30%,var(--glow),transparent 70%)}
+h1{font-size:clamp(44px,7vw,84px);line-height:.98;letter-spacing:-.03em;text-align:center;margin-bottom:0}
+form{margin-top:34px;width:min(520px,100%)}
+.q{width:100%;height:50px;border-radius:16px;padding:0 20px;font-size:15px}
+.links{margin-top:30px;width:min(520px,100%)}
+.links a{display:flex;justify-content:space-between;gap:16px;padding:13px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.links a b{font-weight:500}
+.links a span{color:var(--muted)}
+.links a:hover b{color:var(--sage)}
+</style>
+</head>
+<body>
+<div class="ntp">
+  <div class="eyebrow">Browsy</div>
+  <h1>Waar gaan we<br><em>naartoe?</em></h1>
+  <form id="f"><input class="q" type="text" id="q" placeholder="Zoek of typ een adres" autocomplete="off" autofocus></form>
+  <div class="links" id="links"></div>
+</div>
+<script>
+document.getElementById('f').onsubmit = e => { e.preventDefault(); const v = document.getElementById('q').value.trim(); if (v) daarom.invoke('navigate', v); };
+daarom.invoke('getSettings').then(s => {
+  const box = document.getElementById('links');
+  (s.newtabLinks || []).forEach(([n, d, u]) => {
+    const a = document.createElement('a'); a.href = u;
+    const b = document.createElement('b'); b.textContent = n;
+    const x = document.createElement('span'); x.textContent = d;
+    a.append(b, x); box.appendChild(a);
+  });
+});
+</script>
+</body>
+</html>

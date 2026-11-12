@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Bladwijzers</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Browsy</div>
+  <h1>Je <em>bladwijzers</em></h1>
+  <p style="margin-bottom:18px"><button class="btn" id="imp">Importeer uit Chrome</button> <span class="muted" id="msg"></span></p>
+  <div id="list"></div>
+</div>
+<script>
+const list = document.getElementById('list');
+async function load() {
+  const items = await daarom.invoke('bookmarks:list');
+  list.textContent = '';
+  if (!items.length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Nog geen bladwijzers. Druk op Cmd+D op een pagina, of importeer ze uit Chrome.'; list.appendChild(p); return; }
+  items.forEach(b => {
+    const row = document.createElement('div'); row.className = 'row';
+    const main = document.createElement('div'); main.className = 'main';
+    const name = document.createElement('input'); name.type = 'text'; name.value = b.title; name.style.width = '100%'; name.style.marginBottom = '4px';
+    name.onchange = () => daarom.invoke('bookmarks:rename', b.id, name.value);
+    const a = document.createElement('a'); a.href = b.url; a.className = 'u'; a.style.display = 'block'; a.textContent = b.url;
+    main.append(name, a);
+    const x = document.createElement('button'); x.className = 'x'; x.textContent = '×'; x.title = 'Verwijder';
+    x.onclick = async () => { await daarom.invoke('bookmarks:remove', b.id); load(); };
+    row.append(main, x); list.appendChild(row);
+  });
+}
+document.getElementById('imp').onclick = async () => {
+  const r = await daarom.invoke('import:chrome');
+  document.getElementById('msg').textContent = r && r.found ? r.added + ' toegevoegd, ' + (r.found - r.added) + ' bestonden al.' : 'Geen Chrome-bladwijzers gevonden.';
+  load();
+};
+load();
+</script>
+</body>
+</html>
