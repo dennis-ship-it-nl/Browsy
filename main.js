@@ -236,6 +236,7 @@ function setupIPC() {
   onUI('suggest:query', (w, text, rect) => w.suggest(String(text || ''), rect));
   onUI('suggest:move', (w, d) => w.moveSel(d));
   onUI('suggest:close', w => { if (w.popMode === 'suggest') w.hidePop(); });
+  onUI('page:passwords', () => ctx.openPage('passwords'));
   onUI('menu:main', w => ctx.popupMainMenu(w));
   onPop('pop:ready', w => { w.popReady = true; w.setPop({}); });
   onPop('pop:pick', (w, i) => { const it = w.sugg[i]; if (it) w.go(it.url); });

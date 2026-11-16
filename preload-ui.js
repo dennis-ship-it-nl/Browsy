@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('api', {
   suggest: (text, rect) => call('suggest:query', String(text), rect),
   suggestMove: d => call('suggest:move', d),
   suggestClose: () => call('suggest:close'),
+  openPasswords: () => call('page:passwords'),
   mainMenu: () => call('menu:main'),
   __test: code => call('test:eval', code)
 });

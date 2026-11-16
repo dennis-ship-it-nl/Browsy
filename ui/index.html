@@ -10,17 +10,17 @@
 body.priv{--chrome:#1B1F26;--page:#252A33;--ink:#E8ECF3;--sage:#A7B8D9;--muted:#98A1B3;--line:rgba(232,236,243,.15);--hover:rgba(232,236,243,.09)}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;overflow:hidden;background:var(--page);font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
-.tabrow{height:46px;display:flex;align-items:flex-end;gap:6px;padding:8px 12px 0 14px;background:var(--chrome);-webkit-app-region:drag}
+.tabrow{height:40px;display:flex;align-items:flex-end;gap:6px;padding:8px 12px 0 14px;background:var(--chrome);-webkit-app-region:drag}
 .mac .tabrow{padding-left:84px}
 .tabs{display:flex;align-items:flex-end;gap:2px;flex:1;min-width:0;-webkit-app-region:no-drag}
-.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:38px;padding:0 6px 0 12px;border-radius:10px 10px 0 0;font-size:13px;color:var(--muted);background:transparent;cursor:default}
+.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:32px;padding:0 6px 0 12px;border-radius:6px 6px 0 0;font-size:13px;color:var(--muted);background:transparent;cursor:default}
 .tab.pinned{flex:none;width:42px;max-width:42px;padding:0;justify-content:center}
 .tab.pinned span,.tab.pinned button.x{display:none}
 .tab:hover{color:var(--ink);background:var(--hover)}
 .tab.active{background:var(--page);color:var(--ink)}
-.tab.active::before,.tab.active::after{content:'';position:absolute;bottom:0;width:10px;height:10px;pointer-events:none}
-.tab.active::before{left:-10px;background:radial-gradient(circle at 0 0,transparent 10px,var(--page) 10.5px)}
-.tab.active::after{right:-10px;background:radial-gradient(circle at 100% 0,transparent 10px,var(--page) 10.5px)}
+.tab.active::before,.tab.active::after{content:'';position:absolute;bottom:0;width:6px;height:6px;pointer-events:none}
+.tab.active::before{left:-6px;background:radial-gradient(circle at 0 0,transparent 6px,var(--page) 6.5px)}
+.tab.active::after{right:-6px;background:radial-gradient(circle at 100% 0,transparent 6px,var(--page) 6.5px)}
 .tab.over{box-shadow:inset 2px 0 0 var(--sage)}
 .fav{width:16px;height:16px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:600;background:none;color:var(--muted);overflow:hidden}
 .fav img{width:16px;height:16px;display:block}
@@ -30,13 +30,15 @@ html,body{height:100%;overflow:hidden;background:var(--page);font-family:-apple-
 .tab button.x:hover{background:var(--hover);color:var(--ink)}
 .plus{all:unset;margin-bottom:4px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:18px;-webkit-app-region:no-drag;flex:none}
 .plus:hover{background:var(--hover);color:var(--ink)}
-.tool{height:53px;display:flex;align-items:center;gap:6px;padding:0 14px;background:var(--page)}
+.tool{height:53px;display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,560px) minmax(0,1fr);align-items:center;column-gap:10px;padding:0 14px;background:var(--page)}
+.tl{display:flex;align-items:center;gap:6px;min-width:0}
+.tr{display:flex;align-items:center;gap:6px;justify-content:flex-end;min-width:0}
 .ib{all:unset;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
 .ib:hover{background:var(--hover);color:var(--ink)}
 .ib.on{background:var(--hover);color:var(--sage)}
 .ib[disabled]{opacity:.35;pointer-events:none}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.addr{flex:1 1 320px;min-width:220px;max-width:760px;height:34px;border-radius:12px;background:var(--chrome);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;font-size:13.5px;border:1px solid transparent}
+.addr{min-width:0;height:34px;border-radius:12px;background:var(--chrome);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;font-size:13.5px;border:1px solid transparent}
 .addr:focus-within{border-color:var(--sage)}
 .addr input{all:unset;flex:1;min-width:0;color:var(--ink);-webkit-user-select:text;user-select:text}
 .addr input::placeholder{color:var(--muted)}
@@ -51,8 +53,8 @@ html,body{height:100%;overflow:hidden;background:var(--page);font-family:-apple-
 .priv browser-action-list{display:none}
 browser-action-list{display:flex;align-items:center;gap:2px;flex:none}
 browser-action-list::part(action){width:30px;height:30px;border-radius:50%}
-browser-action-list::part(action):hover{background:var(--hover)}
-.bm{display:none;flex:0 1 auto;min-width:0;max-width:42%;height:34px;align-items:center;gap:1px;margin:0 6px 0 4px;overflow:hidden}
+browser-action-list{--browser-action-hover-bg:var(--hover)}
+.bm{display:none;flex:0 1 auto;min-width:0;height:34px;align-items:center;gap:1px;margin:0 6px 0 4px;overflow:hidden}
 .showbar .bm{display:flex}
 .bm button{all:unset;flex:none;max-width:150px;height:26px;padding:0 9px 0 7px;border-radius:7px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;box-sizing:border-box}
 .bm button:hover{background:var(--hover)}
@@ -68,10 +70,12 @@ browser-action-list::part(action):hover{background:var(--hover)}
 <body>
 <div class="tabrow"><div class="tabs" id="tabs"></div><button class="plus" id="plus" title="Nieuw tabblad">+</button></div>
 <div class="tool">
+  <div class="tl">
   <button class="ib" id="back" title="Terug"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <button class="ib" id="fwd" title="Vooruit"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   <button class="ib" id="reload" title="Herladen"><svg id="rl" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
   <div class="bm" id="bm"></div>
+  </div>
   <div class="addr" id="addr">
     <svg id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V8a4 4 0 018 0v2"/></svg>
     <span id="insecure" style="display:none;font-size:12px;color:var(--muted);white-space:nowrap">Niet beveiligd</span>
@@ -79,9 +83,12 @@ browser-action-list::part(action):hover{background:var(--hover)}
     <span class="privtag">Privé</span>
     <button class="star" id="star" title="Bladwijzer (Cmd+D)"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8 6.8 19.6l1-5.8-4.3-4.1 5.9-.8z"/></svg></button>
   </div>
+  <div class="tr">
   <browser-action-list id="bal"></browser-action-list>
+  <button class="ib" id="pwb" title="Wachtwoorden (Cmd+Option+P)"><svg viewBox="0 0 24 24"><circle cx="8" cy="15" r="3.6"/><path d="M10.8 12.6L19 4.5M16 7.5l2.5 2.5M13.5 10l2 2"/></svg></button>
   <button class="ib" id="claude" title="Claude (Cmd+E)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></button>
   <button class="ib" id="menu" title="Menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
+  </div>
 </div>
 <script>
 const $ = id => document.getElementById(id);
@@ -205,6 +212,7 @@ $('reload').onclick = () => api.reload();
 $('claude').onclick = () => api.toggleClaude();
 $('star').onclick = () => api.toggleBookmark();
 $('menu').onclick = () => api.mainMenu();
+$('pwb').onclick = () => api.openPasswords();
 
 let blurT = null;
 const rect = () => { const r = $('addr').getBoundingClientRect(); return { x: r.left, width: r.width }; };
