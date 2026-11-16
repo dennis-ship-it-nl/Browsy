@@ -30,8 +30,4 @@ Nieuwe versie: verhoog `version` in package.json, maak een tag (bijvoorbeeld v1.
 
 ## Beperkingen
 Geen Google-account-synchronisatie, geen wachtwoordbeheer. Extensies die een apart programma op de Mac nodig hebben (zoals iCloud Wachtwoorden) werken niet. Extensies werken niet in privévensters.
-
-
-## Updatelink instellen
-
-In package.json staat bij `updateUrl` de plaatsaanduiding JOUW-ACCOUNT. Vervang die door de naam van het GitHub-account waar de repository `browsy` staat, bijvoorbeeld https://github.com/accountnaam/browsy/releases/latest.
+Extensies die Chrome-functies gebruiken die Browsy niet kan nabootsen (inloggen via Google met chrome.identity, een zijpaneel van de extensie, offscreen-documenten) starten wel, maar die onderdelen doen niets of geven een nette foutmelding. Foutmeldingen in de browser zelf worden vastgelegd in plaats van getoond.

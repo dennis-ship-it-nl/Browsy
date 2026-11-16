@@ -13,7 +13,7 @@ html,body{height:100%;overflow:hidden;background:var(--chrome);font-family:-appl
 .tabrow{height:46px;display:flex;align-items:flex-end;gap:6px;padding:10px 12px 0 14px;-webkit-app-region:drag}
 .mac .tabrow{padding-left:84px}
 .tabs{display:flex;gap:4px;flex:1;min-width:0;-webkit-app-region:no-drag}
-.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:36px;padding:0 6px 0 12px;border-radius:12px 12px 0 0;font-size:13px;color:var(--muted);background:var(--idle);cursor:default;border:1px solid transparent;border-bottom:none;overflow:hidden}
+.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:36px;padding:0 6px 0 12px;border-radius:8px 8px 0 0;font-size:13px;color:var(--muted);background:var(--idle);cursor:default;border:1px solid transparent;border-bottom:none;overflow:hidden}
 .tab.pinned{flex:none;width:42px;max-width:42px;padding:0;justify-content:center}
 .tab.pinned span,.tab.pinned button.x{display:none}
 .tab:hover{color:var(--ink)}
@@ -51,8 +51,12 @@ browser-action-list::part(action){width:30px;height:30px;border-radius:50%}
 browser-action-list::part(action):hover{background:var(--chrome)}
 .bm{display:none;height:34px;align-items:center;gap:2px;padding:0 10px;background:var(--page);border-bottom:1px solid var(--line);overflow:hidden}
 .showbar .bm{display:flex}
-.bm button{all:unset;flex:none;max-width:160px;height:24px;padding:0 10px;border-radius:8px;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:24px}
+.bm button{all:unset;flex:none;max-width:190px;height:26px;padding:0 9px 0 7px;border-radius:7px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;box-sizing:border-box}
 .bm button:hover{background:var(--chrome)}
+.bm button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:26px;min-width:0}
+.bm .bi{width:15px;height:15px;border-radius:4px;flex:none;display:grid;place-items:center;font-size:9px;font-weight:600;background:var(--line);color:var(--muted);overflow:hidden}
+.bm .bi img{width:15px;height:15px;display:block}
+.bm input{all:unset;box-sizing:border-box;height:24px;width:170px;padding:0 8px;border-radius:7px;font-size:12.5px;color:var(--ink);background:var(--chrome);border:1px solid var(--sage);-webkit-user-select:text;user-select:text}
 .bm .empty{font-size:12px;color:var(--muted);padding-left:4px}
 </style>
 </head>
@@ -131,11 +135,18 @@ function render(s) {
   if (s.activeWc) { const b = $('bal'); if (b.getAttribute('tab') !== String(s.activeWc)) b.setAttribute('tab', String(s.activeWc)); }
   $('star').classList.toggle('on', s.bookmarked);
   $('star').style.display = act && act.url && !/^daarom:/.test(act.url) ? '' : 'none';
+  if (editId) return;   // niet opnieuw tekenen terwijl een naam wordt gewijzigd
   bm.textContent = '';
   if (s.bookmarksBar) {
     if (!s.bookmarks.length) { const e = document.createElement('span'); e.className = 'empty'; e.textContent = 'Nog geen bladwijzers. Druk op Cmd+D om er een toe te voegen.'; bm.appendChild(e); }
     s.bookmarks.forEach(b => {
-      const el = document.createElement('button'); el.textContent = b.title; el.title = b.title;
+      const el = document.createElement('button'); el.title = b.title; el.dataset.id = b.id;
+      const ic = document.createElement('div'); ic.className = 'bi';
+      const letterOf = () => ((b.title || '?').trim()[0] || '?').toUpperCase();
+      if (b.icon) { const i = document.createElement('img'); i.src = b.icon; i.onerror = () => { i.remove(); ic.textContent = letterOf(); }; ic.appendChild(i); }
+      else ic.textContent = letterOf();
+      const lab = document.createElement('span'); lab.textContent = b.title;
+      el.append(ic, lab);
       el.onclick = () => api.openBookmark(b.id, false);
       el.onauxclick = e => { if (e.button === 1) api.openBookmark(b.id, true); };
       el.oncontextmenu = e => { e.preventDefault(); api.bookmarkMenu(b.id); };
@@ -143,6 +154,26 @@ function render(s) {
     });
   }
 }
+
+let editId = null;
+function editBookmark(id) {
+  const el = bm.querySelector('button[data-id="' + id + '"]'); if (!el || editId) return;
+  const b = (st && st.bookmarks || []).find(x => x.id === id); if (!b) return;
+  editId = id;
+  const input = document.createElement('input'); input.value = b.title; input.maxLength = 200; input.spellcheck = false;
+  let done = false;
+  const finish = save => {
+    if (done) return; done = true; editId = null;
+    const v = input.value.trim();
+    if (save && v && v !== b.title) api.renameBookmark(id, v); else if (st) render(st);
+  };
+  input.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); };
+  input.onblur = () => finish(true);
+  input.onclick = e => e.stopPropagation();
+  el.replaceWith(input);
+  input.focus(); input.select();
+}
+api.onBookmarkRename(editBookmark);
 
 api.onState(render);
 api.onFocusAddress(() => { url.focus(); url.select(); });

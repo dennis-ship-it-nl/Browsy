@@ -3,7 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { pathToFileURL } = require('url');
-const { createData } = require('./lib/store');
+const { createData, Store } = require('./lib/store');
+const { createFavicons } = require('./lib/favicons');
 const { createDownloads } = require('./lib/downloads');
 const { BrowserWin, NEWTAB } = require('./lib/window');
 const { buildMenus } = require('./lib/menu');
@@ -11,6 +12,16 @@ const { ElectronChromeExtensions } = require('electron-chrome-extensions');
 const { installChromeWebStore, uninstallExtension } = require('electron-chrome-web-store');
 
 app.setName('Browsy');
+
+// Een fout in een extensie of pagina mag de browser niet laten crashen of een foutvenster tonen.
+const errlog = [];
+function logError(kind, e) {
+  const msg = kind + ': ' + (e && e.stack ? e.stack : String(e));
+  errlog.push(new Date().toISOString() + ' ' + msg); if (errlog.length > 200) errlog.shift();
+  try { console.error(msg); } catch (_) {}
+}
+process.on('uncaughtException', e => logError('uncaughtException', e));
+process.on('unhandledRejection', e => logError('unhandledRejection', e));
 try {
   app.userAgentFallback = app.userAgentFallback
     .replace(/\s*Electron\/\S+/i, '')
@@ -23,7 +34,7 @@ protocol.registerSchemesAsPrivileged([
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
-let data, downloads, ctx;
+let data, downloads, ctx, faviconStore;
 const PAGES = ['newtab', 'history', 'bookmarks', 'downloads', 'settings', 'error'];
 const SESSION_FILE = () => path.join(app.getPath('userData'), 'session.json');
 
@@ -101,7 +112,7 @@ function saveSession() {
 /* ---------- ctx ---------- */
 function makeCtx() {
   return {
-    data, downloads, windows: [], winSeq: 1, lastFocused: null, byId: new Map(),
+    data, downloads, favicons: createFavicons(faviconStore), windows: [], winSeq: 1, lastFocused: null, byId: new Map(),
     toURL,
     register(wc, w) { this.byId.set(wc.id, w); },
     unregister(wc) { try { this.byId.delete(wc.id); } catch (_) {} },
@@ -150,6 +161,15 @@ const startUrl = () => (data.get().startup === 'home' && data.get().homepage) ? 
 /* ---------- extensies ---------- */
 async function setupExtensions() {
   const ses = session.defaultSession;
+  // Aanvullende API's (sidePanel, identity, history, ...) zodat extensies niet crashen.
+  // Moet vóór ElectronChromeExtensions staan: die bevriest daarna het chrome-object.
+  try {
+    const shim = path.join(__dirname, 'preload-crx-shim.js');
+    if (typeof ses.registerPreloadScript === 'function') {
+      ses.registerPreloadScript({ id: 'browsy-crx-shim-sw', type: 'service-worker', filePath: shim });
+      ses.registerPreloadScript({ id: 'browsy-crx-shim-frame', type: 'frame', filePath: shim });
+    }
+  } catch (e) { console.error('Extensie-aanvulling:', e && e.message); }
   ctx.extensions = new ElectronChromeExtensions({
     session: ses,
     async createTab(details) {
@@ -210,6 +230,7 @@ function setupIPC() {
   onUI('bookmark:toggle', w => w.toggleBookmark());
   onUI('bookmark:open', (w, id, inNew) => { const b = data.bookmarks.data.find(x => x.id === id); if (b) { if (inNew) w.createTab(b.url); else w.go(b.url); } });
   onUI('bookmark:menu', (w, id) => w.bookmarkMenu(id));
+  onUI('bookmark:rename', (w, id, title) => { data.renameBookmark(String(id), String(title || '').trim().slice(0, 200)); ctx.pushAll(); return true; });
   onUI('suggest:query', (w, text, rect) => w.suggest(String(text || ''), rect));
   onUI('suggest:move', (w, d) => w.moveSel(d));
   onUI('suggest:close', w => { if (w.popMode === 'suggest') w.hidePop(); });
@@ -284,6 +305,7 @@ app.on('second-instance', (_e, argv) => {
 
 app.whenReady().then(async () => {
   data = createData();
+  faviconStore = new Store('favicons', {});
   downloads = createDownloads(data);
   ctx = makeCtx();
   nativeTheme.themeSource = ['light', 'dark'].includes(data.get().theme) ? data.get().theme : 'system';
@@ -314,5 +336,5 @@ app.whenReady().then(async () => {
   if (!restored) ctx.newWindow();
 });
 
-app.on('before-quit', () => { try { saveSession(); [data.settings, data.bookmarks, data.history, data.downloads].forEach(s => s.flush()); } catch (_) {} });
+app.on('before-quit', () => { try { saveSession(); [data.settings, data.bookmarks, data.history, data.downloads, faviconStore].forEach(s => s && s.flush()); } catch (_) {} });
 app.on('window-all-closed', () => app.quit());
