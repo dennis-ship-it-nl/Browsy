@@ -7,5 +7,8 @@ contextBridge.exposeInMainWorld('api', {
   pick: i => call('pop:pick', i),
   findQuery: t => call('find:query', String(t)),
   findStep: fwd => call('find:step', !!fwd),
+  pwSave: () => call('pw:save'),
+  pwNever: () => call('pw:never'),
+  pwClose: () => call('pw:close'),
   findClose: () => call('find:close')
 });

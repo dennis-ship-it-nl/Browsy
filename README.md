@@ -31,3 +31,7 @@ Nieuwe versie: verhoog `version` in package.json, maak een tag (bijvoorbeeld v1.
 ## Beperkingen
 Geen Google-account-synchronisatie, geen wachtwoordbeheer. Extensies die een apart programma op de Mac nodig hebben (zoals iCloud Wachtwoorden) werken niet. Extensies werken niet in privévensters.
 Extensies die Chrome-functies gebruiken die Browsy niet kan nabootsen (inloggen via Google met chrome.identity, een zijpaneel van de extensie, offscreen-documenten) starten wel, maar die onderdelen doen niets of geven een nette foutmelding. Foutmeldingen in de browser zelf worden vastgelegd in plaats van getoond.
+
+## Wachtwoorden
+
+Browsy heeft een eigen wachtwoordkluis (Cmd+Option+P). De kluis wordt versleuteld met een sleutel uit de macOS-sleutelhanger. Bekijken, kopiëren en exporteren vraagt om Touch ID. Rechtstreeks meesynchroniseren met iCloud Wachtwoorden kan niet, omdat Apple daar geen toegang voor andere browsers voor biedt. Overzetten gaat via Wachtwoorden, Archief, Exporteer alle wachtwoorden, en daarna Importeer CSV in Browsy.

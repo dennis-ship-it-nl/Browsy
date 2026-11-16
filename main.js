@@ -1,10 +1,11 @@
-const { app, BaseWindow, ipcMain, nativeTheme, session, protocol, net, dialog, shell } = require('electron');
+const { app, BaseWindow, ipcMain, nativeTheme, session, protocol, net, dialog, shell, Menu, clipboard, systemPreferences } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { pathToFileURL } = require('url');
 const { createData, Store } = require('./lib/store');
 const { createFavicons } = require('./lib/favicons');
+const { createVault, entriesFromCSV, toCSV } = require('./lib/vault');
 const { createDownloads } = require('./lib/downloads');
 const { BrowserWin, NEWTAB } = require('./lib/window');
 const { buildMenus } = require('./lib/menu');
@@ -34,8 +35,8 @@ protocol.registerSchemesAsPrivileged([
 
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
-let data, downloads, ctx, faviconStore;
-const PAGES = ['newtab', 'history', 'bookmarks', 'downloads', 'settings', 'error'];
+let data, downloads, ctx, faviconStore, vault;
+const PAGES = ['newtab', 'history', 'bookmarks', 'downloads', 'passwords', 'settings', 'error'];
 const SESSION_FILE = () => path.join(app.getPath('userData'), 'session.json');
 
 /* ---------- adres omzetten ---------- */
@@ -153,7 +154,7 @@ function makeCtx() {
       app.setAsDefaultProtocolClient('http'); app.setAsDefaultProtocolClient('https');
       dialog.showMessageBox({ type: 'info', message: 'Controleer in Systeeminstellingen, Bureaublad en Dock, of Browsy nu je standaardbrowser is.' });
     },
-    importChrome
+    importChrome, get vault() { return vault; }
   };
 }
 const startUrl = () => (data.get().startup === 'home' && data.get().homepage) ? toURL(data.get().homepage) : NEWTAB;
@@ -230,6 +231,7 @@ function setupIPC() {
   onUI('bookmark:toggle', w => w.toggleBookmark());
   onUI('bookmark:open', (w, id, inNew) => { const b = data.bookmarks.data.find(x => x.id === id); if (b) { if (inNew) w.createTab(b.url); else w.go(b.url); } });
   onUI('bookmark:menu', (w, id) => w.bookmarkMenu(id));
+  onUI('bookmark:overflow', (w, ids) => w.bookmarkOverflow(Array.isArray(ids) ? ids.map(String) : []));
   onUI('bookmark:rename', (w, id, title) => { data.renameBookmark(String(id), String(title || '').trim().slice(0, 200)); ctx.pushAll(); return true; });
   onUI('suggest:query', (w, text, rect) => w.suggest(String(text || ''), rect));
   onUI('suggest:move', (w, d) => w.moveSel(d));
@@ -241,6 +243,7 @@ function setupIPC() {
   onPop('find:step', (w, forward) => w.find(w.lastFind, !!forward, true));
   onPop('find:close', w => w.closeFind());
 
+  setupPasswords();
   // interne pagina's (daarom://)
   const page = (ch, fn) => ipcMain.handle('pages:' + ch, (e, ...a) => {
     const f = e.senderFrame;
@@ -295,6 +298,106 @@ function setupIPC() {
   page('openPage', (e, name) => { if (PAGES.includes(name)) ctx.openPage(name); });
 }
 
+
+/* ---------- wachtwoorden ---------- */
+let authUntil = 0;
+async function authenticate(reason) {
+  if (process.env.DAAROM_TEST === '1' || Date.now() < authUntil) return true;
+  try {
+    if (process.platform === 'darwin' && systemPreferences.canPromptTouchID()) {
+      await systemPreferences.promptTouchID(reason);
+      authUntil = Date.now() + 120000;
+      return true;
+    }
+  } catch (_) { return false; }
+  return true;   // Mac zonder Touch ID: geen extra controle
+}
+const secureHost = f => { try { const u = new URL(f.url); return u.protocol === 'https:' || u.hostname === 'localhost' ? u.hostname : ''; } catch (_) { return ''; } };
+
+function setupPasswords() {
+  // Een pagina meldt dat er is ingelogd. De host komt uit het frame zelf, nooit uit wat de pagina meldt.
+  ipcMain.on('pw:captured', (e, m) => {
+    const f = e.senderFrame; if (!f || f !== e.sender.mainFrame || !m) return;
+    const w = ctx.ctrlFor(e.sender); if (!w || w.priv || !w.alive()) return;
+    const host = vault.hostOfUrl(f.url); if (!host || vault.isNever(host) || !vault.available()) return;
+    const username = String(m.username || '').slice(0, 300), password = String(m.password || '').slice(0, 1000);
+    if (!password) return;
+    const ex = vault.find(host, username);
+    if (ex && ex.password === password) return;
+    w.showPwPrompt({ host, url: f.url, username, password, existingId: ex ? ex.id : null });
+  });
+  // Een pagina vraagt om invulling. Alleen voor https en alleen voor de eigen host.
+  ipcMain.handle('pw:request', async e => {
+    const f = e.senderFrame; if (!f || f !== e.sender.mainFrame) return null;
+    const host = secureHost(f); if (!host) return null;
+    const list = vault.forHost(host); if (!list.length) return null;
+    let pick = list[0];
+    if (list.length > 1) {
+      const w = ctx.ctrlFor(e.sender);
+      pick = await new Promise(res => {
+        let done = false;
+        Menu.buildFromTemplate(list.slice(0, 12).map(x => ({ label: x.username || '(geen gebruikersnaam)', click: () => { done = true; res(x); } })))
+          .popup({ window: w && w.alive() ? w.win : undefined, callback: () => { if (!done) res(null); } });
+      });
+    }
+    if (!pick) return null;
+    vault.touch(pick.id);
+    return { username: pick.username, password: pick.password };
+  });
+  onPop('pw:save', w => w.savePw());
+  onPop('pw:never', w => w.neverPw());
+  onPop('pw:close', w => { w.pendingPw = null; w.hidePop(); });
+
+  // beheerpagina daarom://passwords
+  const pwPage = (ch, fn) => ipcMain.handle('pages:pw:' + ch, async (e, ...a) => {
+    const f = e.senderFrame;
+    if (!f || f !== e.sender.mainFrame || !/^daarom:\/\/passwords(\/|$)/.test(f.url)) return null;
+    return fn(e, ...a);
+  });
+  pwPage('status', () => ({ available: vault.available(), broken: vault.broken, count: vault.count(), touchId: process.platform === 'darwin' && systemPreferences.canPromptTouchID() }));
+  pwPage('list', (e, q) => vault.list(q));
+  pwPage('add', (e, o) => {
+    if (!vault.available()) return { ok: false, error: 'De kluis is niet beschikbaar op dit apparaat.' };
+    const r = vault.add({ url: String(o.url || '').trim(), username: String(o.username || ''), password: String(o.password || '') });
+    return r ? { ok: true } : { ok: false, error: 'Vul een site en een wachtwoord in.' };
+  });
+  pwPage('reveal', async (e, id) => { if (!(await authenticate('Toon het opgeslagen wachtwoord'))) return null; const x = vault.get(String(id)); return x ? x.password : null; });
+  pwPage('copy', async (e, id) => {
+    if (!(await authenticate('Kopieer het opgeslagen wachtwoord'))) return false;
+    const x = vault.get(String(id)); if (!x) return false;
+    clipboard.writeText(x.password);
+    setTimeout(() => { try { if (clipboard.readText() === x.password) clipboard.clear(); } catch (_) {} }, 30000);
+    return true;
+  });
+  pwPage('update', (e, id, patch) => vault.update(String(id), { username: patch && patch.username, password: patch && patch.password }));
+  pwPage('remove', (e, id) => vault.remove(String(id)));
+  pwPage('import', async e => {
+    const w = ctx.ctrlFor(e.sender);
+    const r = await dialog.showOpenDialog(w && w.alive() ? w.win : undefined, { properties: ['openFile'], filters: [{ name: 'CSV', extensions: ['csv'] }], message: 'Kies het CSV-bestand dat je uit Wachtwoorden of Chrome hebt geëxporteerd' });
+    if (r.canceled || !r.filePaths[0]) return { ok: false };
+    let rows; try { rows = entriesFromCSV(fs.readFileSync(r.filePaths[0], 'utf8')); } catch (_) { return { ok: false, error: 'Het bestand kon niet worden gelezen.' }; }
+    if (!rows.length) return { ok: false, error: 'Geen wachtwoorden gevonden. Verwacht een CSV met kolommen als Title, URL, Username en Password.' };
+    let added = 0, skipped = 0;
+    rows.forEach(x => {
+      const host = vault.hostOfUrl(/^https?:\/\//i.test(x.url) ? x.url : 'https://' + x.url);
+      if (!host) { skipped++; return; }
+      const ex = vault.find(host, x.username);
+      if (ex && ex.password === x.password) { skipped++; return; }
+      vault.add({ url: /^https?:\/\//i.test(x.url) ? x.url : 'https://' + x.url, username: x.username, password: x.password, title: x.title, notes: x.notes }); added++;
+    });
+    return { ok: true, added, skipped, file: r.filePaths[0] };
+  });
+  pwPage('export', async e => {
+    if (!(await authenticate('Exporteer je wachtwoorden'))) return { ok: false };
+    const w = ctx.ctrlFor(e.sender);
+    const r = await dialog.showSaveDialog(w && w.alive() ? w.win : undefined, { defaultPath: 'Browsy wachtwoorden.csv' });
+    if (r.canceled || !r.filePath) return { ok: false };
+    fs.writeFileSync(r.filePath, toCSV(vault.all()), { mode: 0o600 });
+    return { ok: true, file: r.filePath };
+  });
+  pwPage('never', () => { vault.clearNever(); return true; });
+}
+
 /* ---------- start ---------- */
 app.on('open-url', (e, url) => { e.preventDefault(); if (app.isReady() && ctx) ctx.openUrl(url); else pendingUrls.push(url); });
 const pendingUrls = [];
@@ -305,6 +408,8 @@ app.on('second-instance', (_e, argv) => {
 
 app.whenReady().then(async () => {
   data = createData();
+  vault = createVault();
+  await vault.ready;
   faviconStore = new Store('favicons', {});
   downloads = createDownloads(data);
   ctx = makeCtx();
@@ -336,5 +441,5 @@ app.whenReady().then(async () => {
   if (!restored) ctx.newWindow();
 });
 
-app.on('before-quit', () => { try { saveSession(); [data.settings, data.bookmarks, data.history, data.downloads, faviconStore].forEach(s => s && s.flush()); } catch (_) {} });
+app.on('before-quit', () => { try { saveSession(); [data.settings, data.bookmarks, data.history, data.downloads, faviconStore, vault].forEach(s => s && s.flush()); } catch (_) {} });
 app.on('window-all-closed', () => app.quit());

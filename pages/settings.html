@@ -19,7 +19,7 @@
 
   <h2>Uiterlijk</h2>
   <div class="setting"><div>Thema</div><select id="theme"><option value="system">Volg mijn Mac</option><option value="light">Licht</option><option value="dark">Donker</option></select></div>
-  <div class="setting"><div>Bladwijzerbalk tonen<div class="d">Cmd+Shift+B</div></div><input type="checkbox" id="bookmarksBar"></div>
+  <div class="setting"><div>Bladwijzers tonen naast de adresbalk<div class="d">Cmd+Shift+B</div></div><input type="checkbox" id="bookmarksBar"></div>
 
   <h2>Snelkoppelingen op het nieuwe tabblad</h2>
   <p class="note" style="margin:0 0 10px">Eén per regel: Naam | Omschrijving | Adres</p>
@@ -29,6 +29,10 @@
   <h2>Bladwijzers en standaardbrowser</h2>
   <p><button class="btn" id="imp">Importeer bladwijzers uit Chrome</button> <span class="muted" id="impMsg"></span></p>
   <p style="margin-top:10px"><button class="btn" id="def">Maak Browsy mijn standaardbrowser</button></p>
+
+  <h2>Wachtwoorden</h2>
+  <p class="note" style="margin:0 0 10px">Browsy bewaart wachtwoorden versleuteld op deze Mac en vult ze in op sites waar je ze hebt opgeslagen.</p>
+  <p><button class="btn" id="pwOpen">Open wachtwoordbeheer</button></p>
 
   <h2>Extensies</h2>
   <div id="ext"></div>
@@ -75,6 +79,7 @@ $('saveLinks').onclick = async () => {
   await save({ newtabLinks: links }); $('linksMsg').textContent = links.length + ' snelkoppelingen bewaard.';
 };
 $('imp').onclick = async () => { const r = await daarom.invoke('import:chrome'); $('impMsg').textContent = r && r.found ? r.added + ' toegevoegd, ' + (r.found - r.added) + ' bestonden al.' : 'Geen Chrome-bladwijzers gevonden.'; };
+$('pwOpen').onclick = () => daarom.invoke('openPage', 'passwords');
 $('store').onclick = () => daarom.invoke('openUrl', 'https://chromewebstore.google.com/');
 $('def').onclick = () => daarom.invoke('defaultBrowser');
 $('addExt').onclick = async () => { const r = await daarom.invoke('ext:add'); $('extMsg').textContent = r.ok ? r.name + ' geladen.' : (r.error || ''); loadExt(); };

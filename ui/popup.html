@@ -18,6 +18,15 @@ html,body{height:100%;background:transparent;overflow:hidden;font-family:-apple-
 .b:hover{background:var(--chrome);color:var(--ink)}
 .b svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .list{display:none;padding:6px}
+.pw{display:none;height:100%;padding:14px 16px;flex-direction:column;gap:2px}
+.pw h3{font-size:14px;font-weight:600}
+.pw .who{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pw .row{display:flex;gap:8px;margin-top:auto;align-items:center}
+.pw button{font:inherit;font-size:12.5px;border-radius:10px;padding:7px 12px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.pw button:hover{border-color:var(--sage);color:var(--sage)}
+.pw button.pri{background:var(--sage);border-color:var(--sage);color:var(--page)}
+.pw button.pri:hover{color:var(--page);opacity:.9}
+.pw .sp{flex:1}
 .it{display:flex;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:10px;cursor:default}
 .it.sel,.it:hover{background:var(--sel)}
 .ic{width:18px;height:18px;flex:none;stroke:var(--muted);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -35,6 +44,8 @@ html,body{height:100%;background:transparent;overflow:hidden;font-family:-apple-
     <button class="b" id="close" title="Sluiten"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="list" id="list"></div>
+  <div class="pw" id="pw"><h3 id="pwT"></h3><div class="who" id="pwW"></div><div class="who">Wachtwoord: ••••••••</div>
+    <div class="row"><button class="pri" id="pwS">Opslaan</button><button id="pwN">Nooit voor deze site</button><span class="sp"></span><button id="pwX">Sluit</button></div></div>
 </div>
 <script>
 const $ = id => document.getElementById(id);
@@ -47,9 +58,17 @@ const ICONS = {
 let items = [], sel = -1, qTimer = null;
 
 function render(s) {
-  const f = s.mode === 'find';
+  const f = s.mode === 'find', pwm = s.mode === 'pw';
   $('find').style.display = f ? 'flex' : 'none';
-  $('list').style.display = f ? 'none' : 'block';
+  $('list').style.display = (f || pwm) ? 'none' : 'block';
+  $('pw').style.display = pwm ? 'flex' : 'none';
+  if (pwm) {
+    const p = s.pw || {};
+    $('pwT').textContent = p.update ? 'Wachtwoord bijwerken?' : 'Wachtwoord opslaan?';
+    $('pwW').textContent = p.host + (p.username ? ' · ' + p.username : '');
+    $('pwS').textContent = p.update ? 'Bijwerken' : 'Opslaan';
+    return;
+  }
   if (f) {
     if (s.text !== undefined && document.activeElement !== $('q') && !$('q').value) $('q').value = s.text || '';
     const x = s.found || { active: 0, matches: 0 };
@@ -76,6 +95,9 @@ $('q').addEventListener('keydown', e => {
   if (e.key === 'Enter') api.findStep(!e.shiftKey);
   if (e.key === 'Escape') api.findClose();
 });
+$('pwS').onclick = () => api.pwSave();
+$('pwN').onclick = () => api.pwNever();
+$('pwX').onclick = () => api.pwClose();
 $('next').onclick = () => api.findStep(true);
 $('prev').onclick = () => api.findStep(false);
 $('close').onclick = () => api.findClose();

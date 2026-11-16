@@ -9,15 +9,18 @@
 @media (prefers-color-scheme:dark){:root{--chrome:#141915;--page:#202722;--ink:#EFF7E1;--sage:#8CAF87;--muted:#96A294;--line:rgba(239,247,225,.16);--hover:rgba(239,247,225,.09)}}
 body.priv{--chrome:#1B1F26;--page:#252A33;--ink:#E8ECF3;--sage:#A7B8D9;--muted:#98A1B3;--line:rgba(232,236,243,.15);--hover:rgba(232,236,243,.09)}
 *{box-sizing:border-box;margin:0}
-html,body{height:100%;overflow:hidden;background:var(--chrome);font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
-.tabrow{height:46px;display:flex;align-items:center;gap:6px;padding:0 12px 0 14px;-webkit-app-region:drag}
+html,body{height:100%;overflow:hidden;background:var(--page);font-family:-apple-system,"system-ui","Segoe UI",sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+.tabrow{height:46px;display:flex;align-items:flex-end;gap:6px;padding:8px 12px 0 14px;background:var(--chrome);-webkit-app-region:drag}
 .mac .tabrow{padding-left:84px}
-.tabs{display:flex;align-items:center;gap:4px;flex:1;min-width:0;-webkit-app-region:no-drag}
-.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:32px;padding:0 6px 0 10px;border-radius:8px;font-size:13px;color:var(--muted);background:transparent;cursor:default;overflow:hidden}
+.tabs{display:flex;align-items:flex-end;gap:2px;flex:1;min-width:0;-webkit-app-region:no-drag}
+.tab{position:relative;display:flex;align-items:center;gap:8px;max-width:220px;min-width:44px;flex:1 1 0;height:38px;padding:0 6px 0 12px;border-radius:10px 10px 0 0;font-size:13px;color:var(--muted);background:transparent;cursor:default}
 .tab.pinned{flex:none;width:42px;max-width:42px;padding:0;justify-content:center}
 .tab.pinned span,.tab.pinned button.x{display:none}
 .tab:hover{color:var(--ink);background:var(--hover)}
 .tab.active{background:var(--page);color:var(--ink)}
+.tab.active::before,.tab.active::after{content:'';position:absolute;bottom:0;width:10px;height:10px;pointer-events:none}
+.tab.active::before{left:-10px;background:radial-gradient(circle at 0 0,transparent 10px,var(--page) 10.5px)}
+.tab.active::after{right:-10px;background:radial-gradient(circle at 100% 0,transparent 10px,var(--page) 10.5px)}
 .tab.over{box-shadow:inset 2px 0 0 var(--sage)}
 .fav{width:16px;height:16px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:600;background:none;color:var(--muted);overflow:hidden}
 .fav img{width:16px;height:16px;display:block}
@@ -25,15 +28,15 @@ html,body{height:100%;overflow:hidden;background:var(--chrome);font-family:-appl
 .spk{width:13px;height:13px;stroke:var(--sage);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .tab button.x{all:unset;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:14px;line-height:1;color:var(--muted);flex:none}
 .tab button.x:hover{background:var(--hover);color:var(--ink)}
-.plus{all:unset;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:18px;-webkit-app-region:no-drag;flex:none}
+.plus{all:unset;margin-bottom:4px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:18px;-webkit-app-region:no-drag;flex:none}
 .plus:hover{background:var(--hover);color:var(--ink)}
-.tool{height:53px;display:flex;align-items:center;gap:6px;padding:0 14px;background:var(--chrome)}
+.tool{height:53px;display:flex;align-items:center;gap:6px;padding:0 14px;background:var(--page)}
 .ib{all:unset;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
 .ib:hover{background:var(--hover);color:var(--ink)}
 .ib.on{background:var(--hover);color:var(--sage)}
 .ib[disabled]{opacity:.35;pointer-events:none}
 .ib svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.addr{flex:1;max-width:680px;margin:0 auto;height:34px;border-radius:12px;background:var(--page);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;font-size:13.5px;border:1px solid transparent}
+.addr{flex:1 1 320px;min-width:220px;max-width:760px;height:34px;border-radius:12px;background:var(--chrome);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px;font-size:13.5px;border:1px solid transparent}
 .addr:focus-within{border-color:var(--sage)}
 .addr input{all:unset;flex:1;min-width:0;color:var(--ink);-webkit-user-select:text;user-select:text}
 .addr input::placeholder{color:var(--muted)}
@@ -49,15 +52,17 @@ html,body{height:100%;overflow:hidden;background:var(--chrome);font-family:-appl
 browser-action-list{display:flex;align-items:center;gap:2px;flex:none}
 browser-action-list::part(action){width:30px;height:30px;border-radius:50%}
 browser-action-list::part(action):hover{background:var(--hover)}
-.bm{display:none;height:34px;align-items:center;gap:2px;padding:0 10px;background:var(--chrome);overflow:hidden}
+.bm{display:none;flex:0 1 auto;min-width:0;max-width:42%;height:34px;align-items:center;gap:1px;margin:0 6px 0 4px;overflow:hidden}
 .showbar .bm{display:flex}
-.bm button{all:unset;flex:none;max-width:190px;height:26px;padding:0 9px 0 7px;border-radius:7px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;box-sizing:border-box}
+.bm button{all:unset;flex:none;max-width:150px;height:26px;padding:0 9px 0 7px;border-radius:7px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;box-sizing:border-box}
 .bm button:hover{background:var(--hover)}
 .bm button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:26px;min-width:0}
 .bm .bi{width:15px;height:15px;flex:none;display:grid;place-items:center;font-size:10px;font-weight:600;background:none;color:var(--muted);overflow:hidden}
 .bm .bi img{width:15px;height:15px;display:block}
-.bm input{all:unset;box-sizing:border-box;height:24px;width:170px;padding:0 8px;border-radius:7px;font-size:12.5px;color:var(--ink);background:var(--page);border:1px solid var(--sage);-webkit-user-select:text;user-select:text}
-.bm .empty{font-size:12px;color:var(--muted);padding-left:4px}
+.bm input{all:unset;box-sizing:border-box;height:24px;width:150px;padding:0 8px;border-radius:7px;font-size:12.5px;color:var(--ink);background:var(--chrome);border:1px solid var(--sage);-webkit-user-select:text;user-select:text}
+.bm .empty{font-size:12px;color:var(--muted);padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm .more{flex:none;width:26px;max-width:26px;justify-content:center;padding:0;color:var(--muted);font-size:15px}
+.bm .hid{display:none}
 </style>
 </head>
 <body>
@@ -66,6 +71,7 @@ browser-action-list::part(action):hover{background:var(--hover)}
   <button class="ib" id="back" title="Terug"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <button class="ib" id="fwd" title="Vooruit"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   <button class="ib" id="reload" title="Herladen"><svg id="rl" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
+  <div class="bm" id="bm"></div>
   <div class="addr" id="addr">
     <svg id="lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="3"/><path d="M8 10V8a4 4 0 018 0v2"/></svg>
     <span id="insecure" style="display:none;font-size:12px;color:var(--muted);white-space:nowrap">Niet beveiligd</span>
@@ -77,7 +83,6 @@ browser-action-list::part(action):hover{background:var(--hover)}
   <button class="ib" id="claude" title="Claude (Cmd+E)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18"/></svg></button>
   <button class="ib" id="menu" title="Menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg></button>
 </div>
-<div class="bm" id="bm"></div>
 <script>
 const $ = id => document.getElementById(id);
 const url = $('url'), tabsEl = $('tabs'), bm = $('bm');
@@ -138,7 +143,7 @@ function render(s) {
   if (editId) return;   // niet opnieuw tekenen terwijl een naam wordt gewijzigd
   bm.textContent = '';
   if (s.bookmarksBar) {
-    if (!s.bookmarks.length) { const e = document.createElement('span'); e.className = 'empty'; e.textContent = 'Nog geen bladwijzers. Druk op Cmd+D om er een toe te voegen.'; bm.appendChild(e); }
+    if (!s.bookmarks.length) { const e = document.createElement('span'); e.className = 'empty'; e.textContent = 'Cmd+D voegt een bladwijzer toe'; bm.appendChild(e); }
     s.bookmarks.forEach(b => {
       const el = document.createElement('button'); el.title = b.title; el.dataset.id = b.id;
       const ic = document.createElement('div'); ic.className = 'bi';
@@ -152,8 +157,24 @@ function render(s) {
       el.oncontextmenu = e => { e.preventDefault(); api.bookmarkMenu(b.id); };
       bm.appendChild(el);
     });
+    fitBookmarks();
   }
 }
+
+// Bladwijzers die niet meer passen verdwijnen achter een »-knop
+function fitBookmarks() {
+  const old = bm.querySelector('.more'); if (old) old.remove();
+  const btns = [...bm.querySelectorAll('button[data-id]')];
+  btns.forEach(b => b.classList.remove('hid'));
+  const limit = bm.clientWidth;
+  if (!btns.length || bm.scrollWidth <= limit + 1) return;
+  const more = document.createElement('button'); more.className = 'more'; more.textContent = '»'; more.title = 'Meer bladwijzers';
+  bm.appendChild(more);
+  let hidden = [];
+  for (let i = btns.length - 1; i >= 0 && bm.scrollWidth > bm.clientWidth + 1; i--) { btns[i].classList.add('hid'); hidden.unshift(btns[i].dataset.id); }
+  more.onclick = () => api.bookmarkOverflow(hidden);
+}
+window.addEventListener('resize', () => { if (!editId && st && st.bookmarksBar) fitBookmarks(); });
 
 let editId = null;
 function editBookmark(id) {

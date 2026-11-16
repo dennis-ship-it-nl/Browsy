@@ -1,7 +1,7 @@
 {
   "name": "browsy",
   "productName": "Browsy",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Rustige browser op de Chromium-engine voor het daar-om.nl team",
   "main": "main.js",
   "private": true,

@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   toggleBookmark: () => call('bookmark:toggle'),
   openBookmark: (id, inNew) => call('bookmark:open', id, !!inNew),
   bookmarkMenu: id => call('bookmark:menu', id),
+  bookmarkOverflow: ids => call('bookmark:overflow', ids),
   renameBookmark: (id, title) => call('bookmark:rename', id, String(title)),
   onBookmarkRename: cb => ipcRenderer.on('bookmark:edit', (_e, id) => cb(id)),
   suggest: (text, rect) => call('suggest:query', String(text), rect),
